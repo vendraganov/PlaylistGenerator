@@ -1,13 +1,27 @@
 package track_ninja.playlist_generator.services;
 
 import track_ninja.playlist_generator.models.Playlist;
+import track_ninja.playlist_generator.models.dtos.PlayListEditDTO;
+import track_ninja.playlist_generator.models.dtos.PlaylistDTO;
+
+import java.util.List;
 
 public interface PlaylistService {
-    Iterable<Playlist> getAll();
+    List<PlaylistDTO> getAll();
 
-    Iterable<Playlist> getByGenre(String genre);
+    List<PlaylistDTO> getByGenre(String genre);
 
-    Iterable<Playlist> getByUser(String username);
+    List<PlaylistDTO> getByUser(String username);
 
-    Iterable<Playlist> getByTitle(String title);
+    List<PlaylistDTO> getByTitle(String title);
+
+    List<PlaylistDTO> getByDuration(long durationMinutes);
+
+    boolean playlistsExist();
+
+    PlaylistDTO getById(int id);
+
+    boolean editPlaylist(PlayListEditDTO playListEditDTO);
+
+    boolean deletePlaylist(int id);
 }

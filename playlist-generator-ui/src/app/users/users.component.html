@@ -1,0 +1,57 @@
+<div class="bc-image"></div>
+  <div class="container center">
+   <cdk-virtual-scroll-viewport class="viewport" itemSize="20">
+    <table class="table table-hover margin_top text">
+      <thead>
+        <tr>
+            <th class="margin-left">FirstName</th>
+            <th>LastName</th>
+            <th>User Role</th>
+            <th>UserName</th>
+            <th>Email</th>
+            <th>
+              <span>Edit</span>
+              <span class="margin-left-title" >Delete</span>
+            </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *cdkVirtualFor="let user of users">
+          
+            <td *ngIf = "!edditing">{{user.firstName}}</td>
+            <td *ngIf = "edditing"> 
+              <input type="text" [value] = "user.firstName" (input) = "onFirstNameChange(firstName.value)" #firstName>
+            </td>
+
+            <td *ngIf = "!edditing">{{user.lastName}}</td>
+            <td *ngIf = "edditing">
+               <input type="text" [value] = "user.lastName" (input) = "onLastNameChange(lastName.value)" #lastName>
+            </td>
+
+            <td *ngIf = "!edditing">{{user.role}}</td>
+            <td *ngIf = "edditing">
+                <select [(ngModel)]="selectedOption">
+                        <option value="ROLE_USER">User</option>
+                        <option value="ROLE_ADMIN">Administrator</option>
+                </select>
+            </td>
+
+            <td *ngIf = "!edditing">{{user.username}}</td>
+            <td *ngIf = "edditing">
+              <input type="text" [value] = "user.username" (input) = "onUsernameChange(name.value)" #name>
+            </td>
+
+            <td *ngIf = "!edditing">{{user.email}}</td>
+              <td *ngIf = "edditing">
+                <input type="text" [value] = "user.email" (input) = "onEmailChange(email.value)" #email>
+            </td>
+
+            <td>
+              <button class="btn btn-primary button-size" (click)= "editMode(user)" >{{edditing? "Done" : "Edit"}}</button>
+              <button class="btn btn-primary button-size margin-left" (click)= "delete(user)" >Delete</button>
+            </td>
+        </tr>
+      </tbody>
+    </table>
+  </cdk-virtual-scroll-viewport>
+   </div>

@@ -1,3 +1,41 @@
-<p>
-  user works!
-</p>
+
+<div class="bc-image"> 
+    <div class="container center">
+        <div class="row">
+          <div class="col-md-6 img">
+              <img *ngIf="hasImage" class = "image-size" [src]="domSanitizer.bypassSecurityTrustUrl('data:image/png;base64,'+user?.avatar)" style="max-width:100%; max-height:100%;" alt="Avatar">
+        
+              <input style="display: none" type="file"
+              (change)="onUploadAvatar($event)"
+              #avatar>
+          <button  *ngIf="!hasImage" type="button" class="image-button" (click)="avatar.click()"></button>
+          </div>
+          <div class="col-md-6 details">
+
+            <h3 class="form-inline">
+              <span  *ngIf = "!edditing" >{{user?.firstName}}</span>
+              <input *ngIf = "edditing" type="text" [value] = "user.firstName" (input) = "onFirstNameChange(firstName.value)" #firstName>
+              <span  *ngIf = "!edditing" >{{user?.lastName}}</span>
+              <input *ngIf = "edditing" type="text" [value] = "user.lastName" (input) = "onLastNameChange(lastName.value)" #lastName>
+            </h3>
+
+            <h6 *ngIf = "!edditing" class="form-inline">Role:
+                <span >{{user?.role}}</span>
+            </h6>
+    
+            <h6 class="form-inline">
+              <span *ngIf = "!edditing" >Username:</span>
+              <span *ngIf = "!edditing" >{{user?.username}}</span>
+            </h6>
+
+            <h6 class="form-inline">
+                <span *ngIf = "!edditing" >Email:</span>
+                <span *ngIf = "!edditing" >{{user?.email}}</span>
+                <input *ngIf = "edditing" type="text" [value] = "user.email" (input) = "onEmailChange(email.value)" #email>
+            </h6>
+         
+            <button class="btn btn-primary" type="button" (click)="doneEditting()">{{edditing? "Done" : "Edit"}}</button>
+          </div>
+        </div>
+      </div>
+    </div>

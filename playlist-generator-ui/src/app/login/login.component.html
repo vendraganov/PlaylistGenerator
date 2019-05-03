@@ -1,0 +1,48 @@
+<div class="bc-image">
+<div class="container center extention">
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <form [formGroup]="loginForm" (ngSubmit)="onSubmit(login)" #login="ngForm">
+                    <div *ngIf="error" class="alert alert-danger">{{error}}</div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" formControlName="username" class="form-control" 
+                        [ngClass]="{ 'is-invalid': field.username.errors && 
+                        (field.username.touched || field.username.dirty)}"/>
+                        <div *ngIf="field.username.errors" class="invalid-feedback">
+                            <div *ngIf="field.username.errors.required">Username is required</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" formControlName="password" class="form-control" 
+                            [ngClass]="{ 'is-invalid': field.password.errors && 
+                            (field.password.touched || field.password.dirty)}" />
+                            <div *ngIf="field.password.errors" class="invalid-feedback">
+                                <div *ngIf="field.password.errors.required">Password is required</div>
+                            </div>
+                        </div>
+                    <div class="form-group">
+                        <button class="btn btn-primary" [disabled]="loginForm.invalid">Login</button>
+                        <img *ngIf="loading" class="pl-2" 
+                        src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiY
+                        oKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW
+                        5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2
+                        LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4Q
+                        Mu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAA
+                        AAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8A
+                        YPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQx
+                        RIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIun
+                        InK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJ
+                        CgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7s
+                        DX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2n
+                        FwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAA
+                        AMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAA
+                        OwAAAAAAAAAAAA==" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

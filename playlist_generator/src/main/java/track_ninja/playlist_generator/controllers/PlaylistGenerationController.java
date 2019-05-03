@@ -1,16 +1,20 @@
 package track_ninja.playlist_generator.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import track_ninja.playlist_generator.models.Track;
-import track_ninja.playlist_generator.models.dtos.PlaylistGenerationDTO;
+import org.springframework.web.server.ResponseStatusException;
+import track_ninja.playlist_generator.exceptions.DurationTooShortException;
+import track_ninja.playlist_generator.models.dtos.PlaylistDTO;
+import track_ninja.playlist_generator.models.dtos.PlaylistGeneratorDTO;
+import track_ninja.playlist_generator.exceptions.DurationTooLongException;
 import track_ninja.playlist_generator.services.PlaylistGenerationService;
 
-import java.util.Deque;
-import java.util.List;
+import javax.validation.Valid;
+
 
 @RestController
-@RequestMapping("/api/user/generatePlaylist")
+@RequestMapping("/api/user/generate")
 public class PlaylistGenerationController {
     private PlaylistGenerationService playlistGenerationService;
 
@@ -20,7 +24,11 @@ public class PlaylistGenerationController {
     }
 
     @PostMapping
-    public Iterable<Track> findRandomByGenre(@RequestParam long duration, @RequestBody PlaylistGenerationDTO playlistGenerationDTO){
-        return playlistGenerationService.generatePlaylist(duration, playlistGenerationDTO);
+    public PlaylistDTO generatePlaylist(@Valid @RequestBody PlaylistGeneratorDTO playlistGeneratorDTO){
+        try {
+            return playlistGenerationService.generatePlaylist(playlistGeneratorDTO);
+        } catch (DurationTooLongException | DurationTooShortException ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, ex.getMessage());
+        }
     }
 }

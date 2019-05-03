@@ -4,9 +4,15 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import track_ninja.playlist_generator.models.User;
 
+import java.util.List;
+
 @Repository
-public interface UserRepository extends CrudRepository<User, Long> {
+public interface UserRepository extends CrudRepository<User, Integer> {
+    List<User> findAll();
+
     boolean existsByUsername(String name);
 
-    User findByUsername(String username);
+    User findByUsernameAndEnabledTrue(String username);
+
+    List<User> findAllByEnabledTrueAndUsernameLike(String username);
 }

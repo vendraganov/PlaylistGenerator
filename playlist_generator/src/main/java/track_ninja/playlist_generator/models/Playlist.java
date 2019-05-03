@@ -9,6 +9,7 @@ import lombok.Setter;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "playlists")
@@ -17,13 +18,19 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Playlist {
-    private static final String PLAYLIST_ID = "playlist_id";
+
     private static final int TITLE_MIN_LENGTH = 3;
     private static final int TITLE_MAX_LENGTH = 20;
     private static final String TITLE_LENGTH_ERROR_MESSAGE = "Title length must be at least 3 and at most 20 characters long!";
+
     private static final String TITLE = "title";
+    private static final String PLAYLIST_ID = "playlist_id";
     private static final String USER_ID = "user_id";
     private static final String IS_DELETED = "is_deleted";
+    private static final String TRACK_ID = "track_id";
+    private static final String PLAYLIST_TRACK_RELATIONS = "playlist_track_relations";
+    private static final String PLAYLISTS = "playlists";
+    private static final String DURATION = "duration";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,19 +43,26 @@ public class Playlist {
 
     @ManyToOne
     @JoinColumn(name= USER_ID, nullable=false)
-    private User user;
+    private UserDetails user;
 
     @Column(name = IS_DELETED)
     private boolean isDeleted;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-            name = "playlist_track_relations",
-            joinColumns = {@JoinColumn(name = "playlist_id", referencedColumnName = "playlist_id")},
-            inverseJoinColumns = {@JoinColumn(name = "track_id", referencedColumnName = "track_id")})
-    private List<Track> tracks;
+            name = PLAYLIST_TRACK_RELATIONS,
+            joinColumns = {@JoinColumn(name = PLAYLIST_ID, referencedColumnName = PLAYLIST_ID)},
+            inverseJoinColumns = {@JoinColumn(name = TRACK_ID, referencedColumnName = TRACK_ID)})
+    private Set<Track> tracks;
 
     @JsonIgnore
-    @ManyToMany(mappedBy = "playlists")
-    private List<Genre> genres;
+    @ManyToMany(mappedBy = PLAYLISTS)
+    private Set<Genre> genres;
+
+    @Column(name = DURATION)
+    private Long duration;
+
+    @ManyToOne
+    @JoinColumn(name = "top_genre_id")
+    private Genre topGenre;
 }

@@ -1,5 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
+import { User } from './models/user';
+import { AuthenticationService } from './services/authentication.service';
+import { SearchService } from './services/search.service';
+import { Filter } from './models/Filter';
+import { PlaylistService } from './services/playlist.service';
 
 @Component({
   selector: 'app-root',
@@ -7,24 +12,53 @@ import { Location } from '@angular/common';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
+  
+  loggedUser: User;
+  hasPlaylists: boolean;
 
-  isLogged: boolean = false;
-
-  constructor(private location: Location){}
+  constructor(private location: Location, private authenticationService: AuthenticationService,
+    private searchService: SearchService, private playlistService: PlaylistService){}
 
   ngOnInit(){
+    this.authenticationService.currentUser.subscribe(currentUser => this.loggedUser = currentUser);
+    this.playlistService.playlistExist.subscribe(exist => this.hasPlaylists = exist);
+
+  }
+
+  setSearchValue(value: string){
+       this.searchService.setSearchWord(value);
+  }
+
+  filterByTitle(value: string){
+    this.getFilterObject("Title", value);
+  }
+
+  filterByGenre(value: string){
+    this.getFilterObject("Genre", value);
+  }
+
+  filterByUsername(value: string){
+    this.getFilterObject("Username", value);
+  }
+
+  filterByDuration(value: string){
+   this.getFilterObject("Duration", value);
+  }
+
+  getFilterObject(method: string, filterWord: string){
+    var filter = new Filter();
+    filter.method = method;
+    filter.filterWord = filterWord;
+    this.searchService.setFilterObject(filter);
   }
 
   lagout(){
-    //clean local storage
-    localStorage.clear();
-    this.isLogged = false;
-     //reload page or refresh app
-     this.load();
-     
+    this.authenticationService.logout();
   }
 
+   //we can use it to reload page or refresh app
   load() {
     location.reload();
     }
 }
+
