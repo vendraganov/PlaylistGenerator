@@ -81,14 +81,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter implements WebM
                 .antMatchers("/api/login").permitAll()
                 .antMatchers("/api/register").permitAll()
                 .antMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
-                .antMatchers("/api/admin/**").hasRole("ADMIN")
-                //.regexMatchers(HttpMethod.DELETE, "\\/api\\/admin\\/delete\\/user\\?username=[A-Za-z0-9]+").hasRole("USER")
+                .antMatchers("/api/admin/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .formLogin()
-                /*.loginPage("/login")
-                .loginProcessingUrl("/authenticateUser")
-                *//*.defaultSuccessUrl("/home")*/
                 .and()
                 .logout()
                 .and()
@@ -106,7 +102,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter implements WebM
         config.addAllowedHeader("Access-Control-Allow-Origin");
         config.addAllowedHeader("Authorization");
         config.addAllowedHeader("Content-type");
+        config.addAllowedOrigin("*");
+        config.addAllowedOrigin("https://d2sr9b0y21rlen.cloudfront.net");
+        config.addAllowedOrigin("http://d2sr9b0y21rlen.cloudfront.net");
+        config.addAllowedOrigin("d2sr9b0y21rlen.cloudfront.net");
+        config.addAllowedOrigin("playlistfortravel.eu");
+        config.addAllowedOrigin("www.playlistfortravel.eu");
         config.addAllowedOrigin("http://localhost:4200");
+        config.addAllowedOrigin("http://playlistgenerator.s3-website.us-east-2.amazonaws.com");
         config.addAllowedMethod("*");
 
         source.registerCorsConfiguration("/**", config);

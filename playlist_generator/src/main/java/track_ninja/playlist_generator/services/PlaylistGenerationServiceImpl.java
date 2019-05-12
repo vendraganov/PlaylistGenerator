@@ -28,6 +28,9 @@ public class PlaylistGenerationServiceImpl implements PlaylistGenerationService 
     private static final String PLAYLIST_ADDED_TO_GENRES_MESSAGE = "playlist successfully added to all of it's genres!";
 
     private static final Logger logger = LoggerFactory.getLogger(PlaylistGenerationService.class);
+    private static final int MAX_DURATION = 500000;
+    private static final int FIVE_MINUTES_AS_SECONDS = 300;
+    private static final int ONE_MINUTE_AS_SECONDS = 60;
 
     private TrackRepository trackRepository;
     private PlaylistRepository playlistRepository;
@@ -50,16 +53,12 @@ public class PlaylistGenerationServiceImpl implements PlaylistGenerationService 
     public PlaylistDTO generatePlaylist(PlaylistGeneratorDTO playlistGeneratorDTO) {
         logger.info(String.format(INITIATED_PLAYLIST_GENERATION_MESSAGE, playlistGeneratorDTO.toString()));
 
-        long totalDuration = locationService.getTravelDuration(playlistGeneratorDTO.getTravelFrom(), playlistGeneratorDTO.getTravelTo()) * 60;
+        double totalDuration = locationService.getTravelDuration(playlistGeneratorDTO.getTravelFrom(), playlistGeneratorDTO.getTravelTo()) * ONE_MINUTE_AS_SECONDS;
 
-        if (totalDuration > 500000) {
-            DurationTooLongException dtl = new DurationTooLongException();
-            logger.error(dtl.getMessage());
-            throw dtl;
-        } else if (totalDuration < 300) {
-            DurationTooShortException dts = new DurationTooShortException();
-            logger.error(dts.getMessage());
-            throw dts;
+        if (totalDuration > MAX_DURATION) {
+            throw new DurationTooLongException();
+        } else if (totalDuration < FIVE_MINUTES_AS_SECONDS) {
+            throw new DurationTooShortException();
         }
 
         Deque<Track> tracks = new ArrayDeque<>();
@@ -73,22 +72,19 @@ public class PlaylistGenerationServiceImpl implements PlaylistGenerationService 
             genres.add(genreRepository.findByName(genre.getGenre()));
         }
         generatedPlaylist.setGenres(genres.stream().filter(Objects::nonNull).collect(Collectors.toSet()));
-        int errorMargin = 300 / generatedPlaylist.getGenres().size();
+        int errorMargin = FIVE_MINUTES_AS_SECONDS / generatedPlaylist.getGenres().size();
         long topGenreDuration = 0L;
         String topGenre = "";
+        long durationSeconds = 0L;
         if (playlistGeneratorDTO.isAllowSameArtists()) {
             if (playlistGeneratorDTO.isUseTopTracks()) {
-                Deque<Long> trackIds = new ArrayDeque<>();
+                Deque<Integer> trackIds = new ArrayDeque<>();
                 for (GenreDTO genre : playlistGeneratorDTO.getGenres()) {
                     if (genre.getPercentage() == 0) {
                         continue;
                     }
-                    double genreDurationSecond = totalDuration * genre.getPercentage() / 100.0;
-                    long durationSeconds = 0L;
-                    Track firstTrack = trackRepository.findTopTrackByGenre(genre.getGenre());
-                    durationSeconds = updateDuration(durationSeconds, firstTrack);
-                    trackIds.add(firstTrack.getTrackId());
-                    tracks.add(firstTrack);
+                    double genreDurationSecond = getGenreDurationSecond(totalDuration, genre);
+                    durationSeconds = updateDurationSecondsAllowSameArtist(tracks, trackIds, genre, durationSeconds);
 
                     while (durationSeconds < genreDurationSecond - errorMargin) {
                         durationSeconds = addTrackInLoopAllowSameArtistAndTopTracks(tracks, trackIds, durationSeconds, genre.getGenre());
@@ -100,17 +96,13 @@ public class PlaylistGenerationServiceImpl implements PlaylistGenerationService 
                     }
                 }
             } else {
-                Deque<Long> trackIds = new ArrayDeque<>();
+                Deque<Integer> trackIds = new ArrayDeque<>();
                 for (GenreDTO genre : playlistGeneratorDTO.getGenres()) {
                     if (genre.getPercentage() == 0) {
                         continue;
                     }
-                    double genreDurationSecond = totalDuration * genre.getPercentage() / 100.0;
-                    long durationSeconds = 0L;
-                    Track firstTrack = trackRepository.findRandomTrackByGenre(genre.getGenre());
-                    durationSeconds = updateDuration(durationSeconds, firstTrack);
-                    trackIds.add(firstTrack.getTrackId());
-                    tracks.add(firstTrack);
+                    double genreDurationSecond = getGenreDurationSecond(totalDuration, genre);
+                    durationSeconds = updateDurationSecondsAllowSameArtist(tracks, trackIds, genre, durationSeconds);
 
                     while (durationSeconds < genreDurationSecond - errorMargin) {
                         durationSeconds = addTrackInLoopAllowSameArtist(tracks, trackIds, durationSeconds, genre.getGenre());
@@ -128,12 +120,11 @@ public class PlaylistGenerationServiceImpl implements PlaylistGenerationService 
                 if (genre.getPercentage() == 0) {
                     continue;
                 }
-                double genreDurationSecond = totalDuration * genre.getPercentage() / 100.0;
-                long durationSeconds = 0L;
+                double genreDurationSecond = getGenreDurationSecond(totalDuration, genre);
                 Track firstTrack = trackRepository.findTopTrackByGenre(genre.getGenre());
-                durationSeconds = updateDuration(durationSeconds, firstTrack);
                 artistIds.add(firstTrack.getArtist().getArtistId());
                 tracks.add(firstTrack);
+                durationSeconds = updateDuration(durationSeconds, firstTrack);
 
                 while (durationSeconds < genreDurationSecond - errorMargin) {
                     durationSeconds = addTrackInLoopUseTopTracks(tracks, artistIds, durationSeconds, genre.getGenre());
@@ -150,8 +141,7 @@ public class PlaylistGenerationServiceImpl implements PlaylistGenerationService 
                 if (genre.getPercentage() == 0) {
                     continue;
                 }
-                double genreDurationSecond = totalDuration * genre.getPercentage() / 100.0;
-                long durationSeconds = 0L;
+                double genreDurationSecond = getGenreDurationSecond(totalDuration, genre);
                 Track firstTrack = trackRepository.findRandomTrackByGenre(genre.getGenre());
                 artistIds.add(firstTrack.getArtist().getArtistId());
                 tracks.add(firstTrack);
@@ -179,6 +169,23 @@ public class PlaylistGenerationServiceImpl implements PlaylistGenerationService 
         return ModelMapper.playlistToDTO(generatedPlaylist);
     }
 
+    private double getGenreDurationSecond(double totalDuration, GenreDTO genre) {
+        return totalDuration * genre.getPercentage() / 100.0;
+    }
+
+    private long updateDurationSecondsAllowSameArtist(Deque<Track> tracks, Deque<Integer> trackIds, GenreDTO genre, long durationSeconds) {
+        Track firstTrack = addFirstTrackAllowSameArtist(tracks, trackIds, genre);
+        durationSeconds = updateDuration(durationSeconds, firstTrack);
+        return durationSeconds;
+    }
+
+    private Track addFirstTrackAllowSameArtist(Deque<Track> tracks, Deque<Integer> trackIds, GenreDTO genre) {
+        Track firstTrack = trackRepository.findTopTrackByGenre(genre.getGenre());
+        trackIds.add(firstTrack.getTrackId());
+        tracks.add(firstTrack);
+        return firstTrack;
+    }
+
     private void shuffleTracksIfMoreThanOneGenre(PlaylistGeneratorDTO playlistGeneratorDTO, Deque<Track> playlist, Playlist generatedPlaylist) {
         if (playlistGeneratorDTO.getGenres().size() > 1) {
             generatedPlaylist.setTracks(new HashSet<>(shuffleTracks(playlist)));
@@ -193,7 +200,7 @@ public class PlaylistGenerationServiceImpl implements PlaylistGenerationService 
         return result;
     }
 
-    private long addTrackInLoopAllowSameArtistAndTopTracks(Deque<Track> playlist, Deque<Long> firstTrackIds, long firstDurationSeconds, String firstGenre) {
+    private long addTrackInLoopAllowSameArtistAndTopTracks(Deque<Track> playlist, Deque<Integer> firstTrackIds, long firstDurationSeconds, String firstGenre) {
         Track track = trackRepository.findTopTrackByGenreAndTrackNotIn(firstGenre, firstTrackIds);
         firstDurationSeconds = updateDuration(firstDurationSeconds, track);
         firstTrackIds.add(track.getTrackId());
@@ -217,7 +224,7 @@ public class PlaylistGenerationServiceImpl implements PlaylistGenerationService 
         return firstDurationSeconds;
     }
 
-    private long addTrackInLoopAllowSameArtist(Deque<Track> playlist, Deque<Long> trackIds, long currentDurationSeconds, String firstGenre) {
+    private long addTrackInLoopAllowSameArtist(Deque<Track> playlist, Deque<Integer> trackIds, long currentDurationSeconds, String firstGenre) {
         Track track = trackRepository.findRandomTrackByGenreAndTrackNotInSet(firstGenre, trackIds);
         currentDurationSeconds = updateDuration(currentDurationSeconds, track);
         trackIds.add(track.getTrackId());

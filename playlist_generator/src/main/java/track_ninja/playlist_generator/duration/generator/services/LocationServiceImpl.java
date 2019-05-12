@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import track_ninja.playlist_generator.exceptions.LocationNotFoundException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,9 +39,11 @@ public class LocationServiceImpl implements LocationService{
 
     private static final String RESPONSE = "Response: ";
     private static final String URL_INFO = "Query URL: ";
-    private RestTemplate restTemplate;
+    private static final String LOCATION_NOT_FOUND = "Location \"%s\" not found.";
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocationService.class);
+    public static final String JSON_OBJECT_NO_SUCH_FIELD_TRAVEL_DURATION = "Error parsing the JSON object! No such field: 'travelDuration'";
 
-    private static final Logger log = LoggerFactory.getLogger(LocationService.class);
+    private RestTemplate restTemplate;
 
     @Autowired
     public LocationServiceImpl(RestTemplate restTemplate) {
@@ -48,9 +51,7 @@ public class LocationServiceImpl implements LocationService{
     }
 
     @Override
-    public long getTravelDuration(String startPoint, String endPoint){
-
-        long[] travelDuration = new long[1];
+    public double getTravelDuration(String startPoint, String endPoint) throws IllegalArgumentException{
 
         try{
             String origins = getCoordinatesAsString(startPoint);
@@ -63,29 +64,35 @@ public class LocationServiceImpl implements LocationService{
 
             if(response.getStatusCode() == HttpStatus.OK) {
 
-                log.info(URL_INFO + url);
-                log.info(RESPONSE + response.getStatusCode());
+                LOGGER.info(URL_INFO + url);
+                LOGGER.info(RESPONSE + response.getStatusCode());
 
                 try {
                     JsonNode rootNode = objectMapper.readTree(response.getBody());
-
-                    List<JsonNode> results = rootNode.findValues(RESULTS_JSON_FIELD_NAME);
-                    results.get(0).forEach(jsonNode ->
-                            travelDuration[0] = jsonNode.path(TRAVEL_DURATION_JSON_FIELD_NAME).asLong());
-
+                    if(rootNode.has(TRAVEL_DURATION_JSON_FIELD_NAME)){
+                        return rootNode.findPath(TRAVEL_DURATION_JSON_FIELD_NAME).asDouble();
+                    }
+                    else{
+                        LOGGER.error(JSON_OBJECT_NO_SUCH_FIELD_TRAVEL_DURATION);
+                        throw new IllegalArgumentException(JSON_OBJECT_NO_SUCH_FIELD_TRAVEL_DURATION);
+                    }
 
                 } catch (IOException e) {
-                    log.error(ERROR_DURING_PARSING_THE_JSON_OBJECT);
+                    LOGGER.error(ERROR_DURING_PARSING_THE_JSON_OBJECT);
+                    throw new IllegalArgumentException(ERROR_DURING_PARSING_THE_JSON_OBJECT);
                 }
 
+            }
+            else{
+                LOGGER.error(RESPONSE + response.getStatusCode());
+                throw new IllegalArgumentException(RESPONSE + response.getStatusCode());
             }
 
         }
         catch (NoSuchFieldException e){
-            log.error(e.getMessage());
+            LOGGER.error(e.getMessage());
+            throw new IllegalArgumentException(e.getMessage());
         }
-
-        return travelDuration[0];
     }
 
     private String getCoordinatesAsString(String location) throws NoSuchFieldException {
@@ -99,13 +106,17 @@ public class LocationServiceImpl implements LocationService{
 
         if(response.getStatusCode() == HttpStatus.OK) {
 
-            log.info(URL_INFO + url);
-            log.info(RESPONSE + response.getStatusCode());
+            LOGGER.info(URL_INFO + url);
+            LOGGER.info(RESPONSE + response.getStatusCode());
 
             try {
                 JsonNode rootNode = objectMapper.readTree(response.getBody());
 
                 List<JsonNode> points = rootNode.findValues(GEOCODE_POINTS_JSON_FIELD_NAME);
+
+                if (points.isEmpty()) {
+                    throw new LocationNotFoundException(String.format(LOCATION_NOT_FOUND, location));
+                }
 
                 if (points.get(0).size() > 1) {
                     points.get(0).forEach(jsonNode ->
@@ -124,7 +135,7 @@ public class LocationServiceImpl implements LocationService{
 
 
             } catch (IOException e) {
-                log.error(ERROR_DURING_PARSING_THE_JSON_OBJECT);
+                LOGGER.error(ERROR_DURING_PARSING_THE_JSON_OBJECT);
             }
         }
 

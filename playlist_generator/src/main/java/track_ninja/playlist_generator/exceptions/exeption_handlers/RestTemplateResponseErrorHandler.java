@@ -10,11 +10,14 @@ import org.springframework.web.client.ResponseErrorHandler;
 
 import java.io.IOException;
 
+import static org.springframework.http.HttpStatus.Series.CLIENT_ERROR;
+import static org.springframework.http.HttpStatus.Series.SERVER_ERROR;
+
 
 @Component
 public class RestTemplateResponseErrorHandler implements ResponseErrorHandler {
 
-    private static final String RESPONSE_ERROR = "Response error: ";
+    private static final String RESPONSE_ERROR = "RestTemplate Response error: ";
 
     private static final Logger log = LoggerFactory.getLogger(RestTemplateResponseErrorHandler.class);
 
@@ -22,11 +25,20 @@ public class RestTemplateResponseErrorHandler implements ResponseErrorHandler {
     @Override
     public boolean hasError(ClientHttpResponse response) throws IOException {
 
-        return response.getStatusCode() != HttpStatus.OK;
+        return (response.getStatusCode().series() == CLIENT_ERROR || response.getStatusCode().series() == SERVER_ERROR);
     }
 
     @Override
     public void handleError(ClientHttpResponse response) throws IOException {
         log.error(RESPONSE_ERROR + response.getStatusCode());
+        if (response.getStatusCode().series() == HttpStatus.Series.SERVER_ERROR) {
+            throw new IllegalArgumentException(RESPONSE_ERROR + response.getStatusCode());
+        }
+        else if (response.getStatusCode().series() == HttpStatus.Series.CLIENT_ERROR) {
+            // handle CLIENT_ERROR
+            if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
+                throw new IllegalArgumentException(RESPONSE_ERROR + response.getStatusCode());
+            }
+        }
     }
 }

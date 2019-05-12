@@ -6,30 +6,30 @@
     opacity: 0.9;
   }
 
-  .text{
-    color: white;
-  }
-
-  .container{
+  .container-user{
     background-color: rgba(50, 55, 62, 0.7);
     border: 0.5px solid white;
     border-radius: 1%;
     padding:5%;
   }
 
+  .text-labels{
+    text-transform: uppercase;
+    animation: opaa 10s infinite;
+     
+    &.no-animation{
+      animation: none;
+    }
+  }
+
   .viewport {
     height: 420px;
-    width: 960px;
+    width: 1200px;
   }
   .button-size{
-    width: 100px;
-   
+    width: 80px;
   }
-  .margin-left{
-    margin-left: 30px;
-  }
-  .margin-left-title{
-    margin-left: 100px;
-  }
+  
+
 
 

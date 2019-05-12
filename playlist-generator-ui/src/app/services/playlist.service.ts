@@ -8,14 +8,8 @@ import { PlaylistGenerator } from '../models/playlistGenerator';
 
 @Injectable({ providedIn: 'root' })
 export class PlaylistService{
-
-    playlists: Playlist[];
-
-    
-    playlistExistSubject: BehaviorSubject<boolean>;
-    playlistExist: Observable<boolean>;
-    
-    private readonly HOST = 'http://localhost:8080';
+  
+    private readonly HOST = 'http://playlist-generator.us-east-1.elasticbeanstalk.com';
     private readonly PLAYLIST_URL = this.HOST + '/api/playlist';
 
     private readonly CREATE_PLAYLIST_URL = this.HOST + '/api/user/generate';
@@ -31,6 +25,8 @@ export class PlaylistService{
     httpOptions = {
         headers: new HttpHeaders({'Content-Type': 'application/json'})
     };
+    playlistExistSubject: BehaviorSubject<boolean>;
+    playlistExist: Observable<boolean>;
 
     constructor(private httpClient: HttpClient, private authenticationService: AuthenticationService){
       this.playlistExistSubject = new BehaviorSubject<any>(false);
@@ -67,13 +63,14 @@ export class PlaylistService{
       return this.httpClient.delete<boolean>(url, { headers: this.authenticationService.getHeader()});
     }
     
-    editPlaylist(title: string, playlistId: number): Observable<boolean>{
+    editPlaylist(title: string, playlistId: number, username: string): Observable<boolean>{
       const playlistToSave = {
         playlistId: playlistId,
-        title: title
+        title: title,
+        username: username
     };
-      const url = `${this.EDIT_PLAYLIST_URL}/${playlistId}`;
-      return this.httpClient.put<boolean>(url, playlistToSave, { headers: this.authenticationService.getHeader()});
+     
+      return this.httpClient.put<boolean>(this.EDIT_PLAYLIST_URL, playlistToSave, { headers: this.authenticationService.getHeader()});
    }
 
    getPlaylistsFiletrByGenre(genre: string): Observable<Playlist[]> {
@@ -94,24 +91,5 @@ export class PlaylistService{
   getPlaylistsFilterByDuration(duration: number): Observable<Playlist[]> {
     const url = `${this.FILTER_PLAYLIST_DURATION_URL}/${duration}`;
     return this.httpClient.get<Playlist[]>(url,this.httpOptions);
-  }
-
-
-  getPlaylistLocal(playlistId: number): Playlist{
-    return this.playlists.filter(playlist => playlist.playlistId === playlistId)[0];
-  }
-
-  updatePlaylistLocal(playlistIn: Playlist){
-    this.playlists = this.playlists.map(playlist => {
-      if(playlist.playlistId === playlistIn.playlistId){
-          playlist = Object.assign({}, playlist, playlistIn);
-      }
-      return playlist; });
-  }
-
-  deletePlaylistLocal(playlistId: number){
-    this.playlists = this.playlists.filter(playlist => playlist.playlistId !== playlistId);
-      
-  }
-    
+  }    
 }

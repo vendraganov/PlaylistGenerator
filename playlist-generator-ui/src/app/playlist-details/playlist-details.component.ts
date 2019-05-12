@@ -3,6 +3,10 @@ import { Playlist } from '../models/playlist';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PlaylistService } from '../services/playlist.service';
 import { DomSanitizer } from '@angular/platform-browser';
+import { User } from '../models/user';
+import { AuthenticationService } from '../services/authentication.service';
+import { ConfirmationService } from '../confirmation-dialog/confirmation.service';
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 
 @Component({
   selector: 'playlist-details',
@@ -11,46 +15,73 @@ import { DomSanitizer } from '@angular/platform-browser';
 })
 export class PlaylistDetailsComponent implements OnInit {
   
-
-  edditing: boolean = false;
-  playUrl: boolean = false;
+  edditing: boolean;
+  playUrl: boolean;
+  loading: boolean;
+  editDeleteButtonsDisabled: boolean;
   previewUrl: string;
-  title: string;
-
+  titleForm: FormGroup;
+  loggedUser: User;
   playlist: Playlist;
   playlistId: number;
 
-  constructor(private route: ActivatedRoute, private playlistService: PlaylistService, 
-    private domSanitizer: DomSanitizer, private router: Router) { }
+  constructor(private formBuilder: FormBuilder, private route: ActivatedRoute, private playlistService: PlaylistService, 
+    private domSanitizer: DomSanitizer, private router: Router, private authenticationService: AuthenticationService,
+    private confirmationService: ConfirmationService) { 
+      this.authenticationService.currentUser.subscribe(currentUser => this.loggedUser = currentUser);
+      this.edditing = false;
+      this.playUrl = false;
+      this.loading = true;
+      this.editDeleteButtonsDisabled = true;
+    }
 
   ngOnInit() {
     if(this.route.snapshot.paramMap.has("playlistId")){
-      console.log(true);
-    this.playlistId = +this.route.snapshot.paramMap.get("playlistId");
-    this.setPlaylist(this.playlistId);
+       this.playlistId = +this.route.snapshot.paramMap.get("playlistId");
+       this.displayPlaylist(this.playlistId);
     }
+    this.titleForm = this.formBuilder.group({
+      title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(10)]]
+  });
   }
 
-  setPlaylist(playlistId: number){
+  displayPlaylist(playlistId: number){
   this.playlistService.getPlaylist(playlistId).subscribe(data => {
-      console.log(data);
       this.playlist = data;
    },error => {
-      console.log(error);
-    },() => { });
-  }
-  onTitleChange(value: string){
-        this.title = value;
+    alert("Error: " +error);
+    },() => {
+        if(!this.loggedUser) {
+          this.editDeleteButtonsDisabled = true;
+        }
+        else if(this.playlist.username === this.loggedUser.username || this.loggedUser.role === 'ROLE_ADMIN'){
+          this.editDeleteButtonsDisabled = false;
+        }
+        this.loading = !this.loading;
+     });
   }
 
-  getFilter(value: string) {
-    return JSON.stringify(value);
-   
+  get field() { return this.titleForm.controls; }
+
+  onSubmit(event) {
+
+    this.edditing = !this.edditing;
+    if (this.titleForm.invalid) {
+        return;
+    }
+    if(!this.edditing){
+      this.playlistService.editPlaylist(event.value.title, this.playlistId, this.loggedUser.username).subscribe(data => {
+      },error => {
+         alert("Error: " +error);
+       },() => { 
+          this.playlist.title = event.value.title;
+       });
+    }
+    
 }
 
 play(value: string){
   this.playUrl = !this.playUrl;
-  console.log(value);
   this.previewUrl = value;
 }
 
@@ -58,31 +89,36 @@ handelStop(){
   this.playUrl = !this.playUrl;
 }
 
-editPlaylist(){
-  this.edditing = !this.edditing;
-  if(this.title){
-    console.log("edit title");
-    this.playlistService.editPlaylist(this.title, this.playlistId).subscribe(data => {
-      console.log(data);
-   },error => {
-      console.log(error);
-    },() => { 
-       this.playlist.title = this.title;
-       this.playlistService.updatePlaylistLocal(this.playlist);
-    });
+deletePlaylist(){
+  
+  if(this.edditing){
+    this.edditing = !this.edditing;
+  }
+  else{
+    this.openConfirmationDialog();
   }
 }
 
-deletePlaylist(){
-  this.playlistService.deletePlaylist(this.playlistId).subscribe(data => {
-    console.log(data);
+openConfirmationDialog() {
+  this.confirmationService.confirm('Please confirm!', 'Do you really want to delete this playlist?')
+  .then((confirmed) => {
     
-  },error => {
-    console.log(error);
-  },() => { 
-    this.playlistService.deletePlaylist(this.playlistId);
-    this.router.navigate(['/playlists-dashboard']);
-  });
+    if(confirmed){
+      this.playlistService.deletePlaylist(this.playlistId).subscribe(data => {
+        
+      },error => {
+        alert("Error: " +error);
+      },() => { 
+        this.playlistService.deletePlaylist(this.playlistId);
+        this.router.navigate(['/playlists-dashboard']);
+      });
+    }
+  })
+  .catch(() => console.log('Dialog closed'));
+}
+
+close(){
+  this.router.navigate(['/playlists-dashboard']);
 }
 
 }

@@ -20,7 +20,7 @@ import java.util.Set;
 public class Playlist {
 
     private static final int TITLE_MIN_LENGTH = 3;
-    private static final int TITLE_MAX_LENGTH = 20;
+    private static final int TITLE_MAX_LENGTH = 10;
     private static final String TITLE_LENGTH_ERROR_MESSAGE = "Title length must be at least 3 and at most 20 characters long!";
 
     private static final String TITLE = "title";
@@ -31,6 +31,7 @@ public class Playlist {
     private static final String PLAYLIST_TRACK_RELATIONS = "playlist_track_relations";
     private static final String PLAYLISTS = "playlists";
     private static final String DURATION = "duration";
+    private static final String TOP_GENRE_ID = "top_genre_id";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -63,6 +64,6 @@ public class Playlist {
     private Long duration;
 
     @ManyToOne
-    @JoinColumn(name = "top_genre_id")
+    @JoinColumn(name = TOP_GENRE_ID)
     private Genre topGenre;
 }

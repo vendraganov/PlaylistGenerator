@@ -2,40 +2,68 @@
 <div class="bc-image"> 
     <div class="container center">
         <div class="row">
-          <div class="col-md-6 img">
-              <img *ngIf="hasImage" class = "image-size" [src]="domSanitizer.bypassSecurityTrustUrl('data:image/png;base64,'+user?.avatar)" style="max-width:100%; max-height:100%;" alt="Avatar">
-        
-              <input style="display: none" type="file"
-              (change)="onUploadAvatar($event)"
-              #avatar>
-          <button  *ngIf="!hasImage" type="button" class="image-button" (click)="avatar.click()"></button>
+          <div class="col-md-6 img-center">
+               <div class = "image">
+                  <img *ngIf="hasImage && !edditing"  [src]="domSanitizer.bypassSecurityTrustUrl('data:image/png;base64,'+user?.avatar)" style="max-width:100%; max-height:100%;" alt="Avatar">
+                
+                  <input style="display: none" type="file"
+                  (change)="onUploadAvatar($event)"
+                  #avatar>
+              <button  *ngIf="!hasImage || edditing" type="button" class="image-button" (click)="avatar.click()"></button>
+            </div>
           </div>
-          <div class="col-md-6 details">
+          <form class="col-md-6 details" [formGroup]="editForm" (ngSubmit)="onSubmit(edit)" #edit="ngForm">
 
-            <h3 class="form-inline">
+            <h2 class="form-inline form-group">
               <span  *ngIf = "!edditing" >{{user?.firstName}}</span>
-              <input *ngIf = "edditing" type="text" [value] = "user.firstName" (input) = "onFirstNameChange(firstName.value)" #firstName>
-              <span  *ngIf = "!edditing" >{{user?.lastName}}</span>
-              <input *ngIf = "edditing" type="text" [value] = "user.lastName" (input) = "onLastNameChange(lastName.value)" #lastName>
-            </h3>
+              <input *ngIf = "edditing" type="text" placeholder = "{{user.firstName}}" formControlName="firstName" class="form-control" 
+                        [ngClass]="{ 'is-invalid': field.firstName.errors &&
+                        (field.firstName.touched || field.firstName.dirty)}" />
+                        <div *ngIf="field.firstName.errors" class="invalid-feedback error-text">
+                            <div *ngIf="field.firstName.errors.required">First Name is required</div>
+                            <div *ngIf="field.firstName.errors.minlength || field.firstName.errors.maxlength">
+                                    First Name must be at least 2 characters and maximum 15 characters long
+                            </div>
+                        </div>
 
-            <h6 *ngIf = "!edditing" class="form-inline">Role:
-                <span >{{user?.role}}</span>
-            </h6>
+              <span  *ngIf = "!edditing"  class="span-margin">{{user?.lastName}}</span>
+              <input *ngIf = "edditing" type="text" placeholder = "{{user.lastName}}" formControlName="lastName" class="form-control" 
+              [ngClass]="{ 'is-invalid': field.lastName.errors &&
+               (field.lastName.touched || field.lastName.dirty)}" />
+              <div *ngIf="field.lastName.errors" class="invalid-feedback error-text">
+                  <div *ngIf="field.lastName.errors.required">Last Name is required</div>
+                  <div *ngIf="field.lastName.errors.minlength || field.lastName.errors.maxlength">
+                          Last Name must be at least 2 characters and maximum 15 characters long
+                  </div>
+              </div>
+            </h2>
+
+            <h5 *ngIf = "!edditing" class="form-inline">Role:
+                <span class="span-margin">{{role}}</span>
+            </h5>
     
-            <h6 class="form-inline">
-              <span *ngIf = "!edditing" >Username:</span>
-              <span *ngIf = "!edditing" >{{user?.username}}</span>
-            </h6>
+            <h5 *ngIf = "!edditing" class="form-inline">Username:
+              <span class="span-margin">{{user?.username}}</span>
+            </h5>
 
-            <h6 class="form-inline">
+            <h5 class="form-inline form-group">
                 <span *ngIf = "!edditing" >Email:</span>
-                <span *ngIf = "!edditing" >{{user?.email}}</span>
-                <input *ngIf = "edditing" type="text" [value] = "user.email" (input) = "onEmailChange(email.value)" #email>
-            </h6>
-         
-            <button class="btn btn-primary" type="button" (click)="doneEditting()">{{edditing? "Done" : "Edit"}}</button>
-          </div>
+                <span *ngIf = "!edditing" class="span-margin">{{user?.email}}</span>
+                <input *ngIf = "edditing" type="text" placeholder = "{{user.email}}" formControlName="email" class="form-control" 
+                [ngClass]="{ 'is-invalid': field.email.errors &&
+                 (field.email.touched || field.email.dirty)}" />
+                <div *ngIf="field.email.errors" class="invalid-feedback error-text">
+                    <div *ngIf="field.email.errors.required">Email is required</div>
+                    <div *ngIf="field.email.errors.email">Email must be a valid email address</div>
+                </div>
+            </h5>
+             
+            <div class="buttons form-group">
+                <button class="btn btn-primary button-edit" [disabled]="edditing && editForm.invalid">{{edditing? "Done" : "Edit"}}</button>
+                <button class="btn btn-primary button-cansel" type="button" (click)="cansel()">{{edditing? "Cansel" : "Back"}}</button>
+            </div>
+           
+          </form>
         </div>
       </div>
     </div>

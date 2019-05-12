@@ -1,35 +1,48 @@
 
 <div class="bc-image">
-  <div class="container-playlist center">
-      <div class="row">
-        <div>
-        <div>
-            <span class="title">Title:</span>
-            <span *ngIf = "!edditing"class="track-titles">{{playlist?.title}}</span>
-             <input *ngIf = "edditing" type="text" [value] = "playlist?.title" (input) = "onTitleChange(title.value)" #title>
+  <div *ngIf="!loading" class="container-playlist center">
+      <div class="close-container" (click)="close()" >
+          <div class="leftright"></div>
+          <div class="rightleft"></div>
+       </div>
+      <div class="row margin-top">
+        <form [formGroup]="titleForm" (ngSubmit)="onSubmit(title)" #title="ngForm">
+        <div class="form-group">        
+              <span *ngIf = "!edditing" class="title">Title:</span>
+              <span *ngIf = "!edditing" class="track-titles">{{playlist?.title}}</span>
+               <input *ngIf = "edditing" type="text" formControlName="title" class="form-control input-size" 
+               placeholder="Title name" [ngClass]="{ 'is-invalid': field.title.errors && 
+               (field.title.touched || field.title.dirty)}">
+               <div *ngIf="field.title.errors" class="invalid-feedback input-size">
+                  <div *ngIf="field.title.errors.required">Title is required</div>
+                  <div *ngIf="field.title.errors.minlength || field.title.errors.maxlength">
+                      Title Name must be at least 3 characters and maximum 10 characters long
+                  </div>
+              </div>          
         </div>
 
         <div class="container-image" [ngStyle]= "{'background-image': 'url('+playlist?.imageUrl+')' , 'background-repeat': 'no-repeat', 'background-size': 'cover'}">
-          
-                <h6 class="form-inline">Duration:
-                    <span >{{playlist?.duration}}</span>
-                </h6>
-        
-                <h6 class="form-inline">User Created it:
-                  <span >{{playlist?.username}}</span>
-                </h6>
-                
-                <h6 class="form-inline">Genres:
-                <span *ngFor="let genre of playlist?.genres">
-                    <span style="padding-left:3px">{{genre}}</span>
-                </span>
-                </h6>
+                <div class="playlist-details">
+                    <h5 class="form-inline">Duration:
+                        <span class="indent" >{{playlist?.duration}}</span>
+                    </h5>
+            
+                    <h5 class="form-inline">Created By:
+                      <span class="indent" >{{playlist?.username}}</span>
+                    </h5>
+                    
+                    <h5 class="form-inline">Genres:
+                    <span class="indent" *ngFor="let genre of playlist?.genres">
+                        <span>{{genre}}</span>
+                    </span>
+                    </h5>
+                </div>      
         </div>
-        <div class="form-inline">
-            <button class="btn btn-primary" type="button" (click)="editPlaylist()">{{ edditing ? "Done" : "Edit" }}</button>
-            <button class="btn btn-primary" type="button" (click)="deletePlaylist()">Delete</button>
+        <div class="form-group form-inline">
+            <button class="btn btn-primary edit-button" [disabled]="edditing && titleForm.invalid" *ngIf="!editDeleteButtonsDisabled">{{ edditing ? "Done" : "Edit" }}</button>
+            <button class="btn btn-primary delete-button" type="button" (click)="deletePlaylist()" *ngIf="!editDeleteButtonsDisabled">{{ edditing ? "Cancel" : "Delete" }}</button>
         </div>
-      </div>
+      </form>
         
         <div class="col-md-6 details">
            <div>
@@ -45,12 +58,14 @@
             <cdk-virtual-scroll-viewport itemSize="20" class="track-container" >
                 <div class="form-inline" *cdkVirtualFor="let track of playlist?.tracks">
                     <button class="btn btn-primary play-button" (click)= "play(track.previewUrl)"><i class="fa fa-play-circle play-icon"></i></button>
-                    <span class="indent">{{track?.title}},</span>
+                    <div class="track-details">
+                    <span >{{track?.title}},</span>
                     <span class="indent">{{track?.duration}},</span>
                     <span class="indent">{{track?.artistName}},</span>
                     <span class="indent">{{track?.albumName}},</span>
                     <span class="indent">{{track?.genreName}},</span>
                     <span class="indent">{{track?.rank}}</span>
+                  </div>
                 </div>
               </cdk-virtual-scroll-viewport>
            </div>
@@ -58,4 +73,10 @@
       </div>
     </div>
     <player *ngIf="playUrl" [url]="previewUrl" (stop) ="handelStop($event)"></player>
+    <div *ngIf="loading" class="loading-animation center-loading">
+      <div class="loader"></div>
+      <div class="loaderbefore"></div>
+      <div class="circular"></div>
+      <div class="circular another"></div>
+  </div>
   </div>

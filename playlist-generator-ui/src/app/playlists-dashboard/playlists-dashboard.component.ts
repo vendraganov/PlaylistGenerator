@@ -16,40 +16,41 @@ export class PlaylistsDashboardComponent implements OnInit {
   subscriptions = new Subscription();
   playlistFullStack: Playlist[];
   playlists: Playlist[];
-  
-  hasPlaylists: boolean;
+
+  loading: boolean;
+  noPlaylists: boolean;
+  noResult: boolean;
+
   forward: boolean;
   backward: boolean;
-  trackList: number;
-  nextStack: number;
-  
   forwardDisabled: boolean;
   backwarDdisabled: boolean;
 
-  constructor(private playlistService: PlaylistService, private router: Router, private searchService: SearchService) {}
+  trackList: number;
+  nextStack: number;
 
-  ngOnInit() {
+  constructor(private playlistService: PlaylistService, private router: Router, private searchService: SearchService) {
+    this.playlistService.setPlaylistExistValue(true);
+    this.searchService.setPlaceholderValue("Search Playlist");
+  
+  }
 
-    this.playlistService.playlistsExistInDB().subscribe(data => {
-      console.log(data);
-      this.hasPlaylists = data;
-      this.playlistService.setPlaylistExistValue(this.hasPlaylists);
-      if(this.hasPlaylists){
-       
-        this.playlistService.getPlaylists().subscribe(data => {
-          console.log(data);
-          this.playlistFullStack = data;
-        },error => {
-          console.log(error);
-        },() => { 
-           this.loadPlaylists();
-        });
-      }
-      
-     },error => {
-      console.log(error);
-    },() => { });
-     
+  ngOnInit() { 
+    
+    this.loading = true;
+    this.noPlaylists = false;
+    this.noResult = false;
+
+    this.playlistService.getPlaylists().subscribe(data => {
+      this.playlistFullStack = data;
+    },error => {
+      alert("Error: " + error);
+      this.loading = false;
+    },() => { 
+       this.loading = false;
+       this.noPlaylists = this.playlistFullStack.length === 0;
+       this.loadPlaylists();
+    });
   }
 
   loadPlaylists(){
@@ -69,20 +70,20 @@ export class PlaylistsDashboardComponent implements OnInit {
         this.filter(filterObject);
       }
     }));
-
-    
   }
 
   ngOnDestroy(){
-      this.subscriptions.unsubscribe();
+    this.loading = false;
+    this.playlistService.setPlaylistExistValue(false);
+    this.subscriptions.unsubscribe();
   }
 
   showPlaylistDetails(value: Playlist){
+    this.loading = false;
     this.router.navigate(['/playlist-details', value.playlistId]);
   }
 
   next(){
-     console.log(this.playlists.length);
      this.forward = true;
      if(this.backward){
       this.trackList+=this.nextStack;
@@ -99,7 +100,6 @@ export class PlaylistsDashboardComponent implements OnInit {
   }
 
   previous(){
-    console.log(this.trackList);
     this.backward = true;
     if(this.forward){
       this.trackList-=this.nextStack;
@@ -123,6 +123,7 @@ private get validatePrevious(): boolean{
   return this.playlists.length === undefined || this.playlists.length === 0 || this.trackList < 3;
 }
 
+
 filter(filter: Filter){
    
   switch(filter.method) { 
@@ -141,7 +142,12 @@ filter(filter: Filter){
     case "Duration": { 
        this.filterByDuration(filter.filterWord);
        break; 
-    }  
+    }
+    case "Refresh": { 
+      this.searchService.setSearchValue("");
+      this.ngOnInit();
+      break; 
+   }  
     default: { 
        console.log("Invalid method"); 
        break;              
@@ -152,47 +158,69 @@ filter(filter: Filter){
 
 
 filterByTitle(value: string){
+  if(!value || value===""){
+    return;
+  }
+  this.loading = true;
   this.playlistService.getPlaylistsFiletByTitile(value).subscribe(data => {
-    console.log(data);
     this.playlistFullStack = data;
   },error => {
-    console.log(error);
+    this.loading = !this.loading;
+    alert(error);
   },() => { 
-    this.loadPlaylists();
+    this.setupView();
   }); 
 }
 
 filterByGenre(value: string){
+  if(!value || value===""){
+    return;
+  }
+  this.loading = true;
   this.playlistService.getPlaylistsFiletrByGenre(value).subscribe(data => {
-    console.log(data);
     this.playlistFullStack = data;
   },error => {
-    console.log(error);
+    this.loading = !this.loading;
+    alert(error);
   },() => { 
-    this.loadPlaylists();
+    this.setupView();
   }); 
 }
 
 filterByUsername(value: string){
+  if(!value || value===""){
+    return;
+  }
+  this.loading = true;
   this.playlistService.getPlaylistsFilterByUsername(value).subscribe(data => {
-    console.log(data);
     this.playlistFullStack = data;
   },error => {
-    console.log(error);
+    this.loading = !this.loading;
+    alert(error);
   },() => { 
-    this.loadPlaylists();
+    this.setupView();
   }); 
 }
 
 filterByDuration(value: string){
+  if(!value || value===""){
+    return;
+  }
+  this.loading = true;
   this.playlistService.getPlaylistsFilterByDuration(+value).subscribe(data => {
-    console.log(data);
     this.playlistFullStack = data;
-  },error => {
-    console.log(error);
+  },error => { 
+    this.loading = !this.loading;
+    alert(error);
   },() => { 
-    this.loadPlaylists();
+    this.setupView();
   });  
+}
+
+setupView(){
+  this.loading = false;
+  this.noResult = this.playlistFullStack.length === 0;
+  this.loadPlaylists();
 }
 
 }

@@ -24,7 +24,7 @@
   align-items: center;
 }
 .container-list .wrapper .box{
-  background-color: rgba(183, 184, 184, 0.3);
+  background-color: rgba(0, 0, 0, 0.7);
   width: 380px;
   height: 220px;
   margin: 10px;
@@ -66,37 +66,41 @@
 }
 
 .container-list .wrapper .box:hover .icon .fa{
-  font-size: 15pt;
+  font-size: 20pt;
 }
 .container-list .wrapper .box .icon .title{
-  padding: 5px;
+  padding: 10px;
   font-size: 35pt;
   white-space: nowrap;
 }
 
 .container-list .wrapper .box:hover .icon .title{
-  padding: 3px;
-  font-size: 15pt;
+  padding: 8px;
+  font-size: 20pt;
   white-space: nowrap;
 }
 
 .container-list .wrapper .box .content{
-  
   text-align: center;
-  padding: 20px;
   color: white;
 }
 
+.container-list .wrapper .box .content .details{
+margin-bottom: 15px;
+}
+
+
 .arrows{
   font-size: 50px;
-  color: white;
+  color: rgb(97, 97, 97);
   padding: 0;
   border: none;
   background: none;
  
 }
 .arrows:hover{
-  color: black;
+  color: rgb(170, 169, 169);
+  border: none;
 }
 .arrows[disabled]{
   visibility: hidden;
@@ -111,7 +115,13 @@
 .message{
   text-align: center;
   margin: 20px;
-  color: rgba(138, 126, 190, 0.938);
+  color: rgba(138, 126, 190, 0.9);
+}
+
+.info{
+  text-align: center;
+  color: rgb(211, 211, 211);
+  font-size: 20pt;
 }
 
 .logo{
@@ -119,3 +129,8 @@
   text-align: center;
   margin-left: 70px;
 }
+.center-loading{
+  margin-left: 20px;
+  margin-top: 80px;
+}
+
